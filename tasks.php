@@ -81,16 +81,16 @@
                         <div class="flex items-center space-x-4">
                             <div class="relative">
                                 <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                                <input type="text" placeholder="Search tasks..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" placeholder="Search tasks..." class="search-input pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
-                            <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select class="status-filter px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option>All Tasks</option>
                                 <option>To Do</option>
                                 <option>In Progress</option>
                                 <option>Completed</option>
                                 <option>Overdue</option>
                             </select>
-                            <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select class="priority-filter px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option>All Priorities</option>
                                 <option>High</option>
                                 <option>Medium</option>
@@ -109,91 +109,13 @@
                 </div>
 
                 <!-- Task List -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 tasks-container">
                     <div class="p-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-800">Active Tasks</h3>
                     </div>
                     
-                    <div class="divide-y divide-gray-200">
-                        <!-- Task Item -->
-                        <div class="task-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <input type="checkbox" class="w-5 h-5 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-gray-800">Review NDA with TechCorp</h4>
-                                        <p class="text-sm text-gray-500">Due: Tomorrow at 3:00 PM</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">High</span>
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">In Progress</span>
-                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                        U
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Task Item -->
-                        <div class="task-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <input type="checkbox" class="w-5 h-5 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-gray-800">Draft employment contract for new hire</h4>
-                                        <p class="text-sm text-gray-500">Due: Friday at 5:00 PM</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Medium</span>
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">To Do</span>
-                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                        J
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Task Item -->
-                        <div class="task-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <input type="checkbox" checked class="w-5 h-5 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-gray-800 task-completed">Update privacy policy</h4>
-                                        <p class="text-sm text-gray-500">Completed yesterday</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">Low</span>
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Completed</span>
-                                    <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                        S
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Task Item -->
-                        <div class="task-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <input type="checkbox" class="w-5 h-5 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-gray-800">Prepare contract amendments</h4>
-                                        <p class="text-sm text-gray-500">Due: Next Monday at 9:00 AM</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Medium</span>
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">In Progress</span>
-                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                        U
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div id="tasks-list" class="divide-y divide-gray-200">
+                        <!-- Tasks will be loaded dynamically -->
                     </div>
 
                     <!-- Task Actions -->
@@ -210,28 +132,6 @@
             </main>
         </div>
     </div>
-
-    <script>
-        function toggleSubmenu(id) {
-            const submenu = document.getElementById(id + '-submenu');
-            const arrow = document.getElementById(id + '-arrow');
-            
-            submenu.classList.toggle('hidden');
-            arrow.classList.toggle('rotate-180');
-        }
-
-        // Task completion toggle
-        $(document).ready(function() {
-            $('input[type="checkbox"]').change(function() {
-                const taskText = $(this).siblings('div').find('h4');
-                if (this.checked) {
-                    taskText.addClass('task-completed');
-                } else {
-                    taskText.removeClass('task-completed');
-                }
-            });
-        });
-    </script>
 <?php
     include 'footer.php';
 ?>

@@ -22,7 +22,7 @@
                 <!-- Action Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <!-- AI Review Card -->
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg card-hover transition-all cursor-pointer">
+                    <div class="ai-review-btn bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg card-hover transition-all cursor-pointer">
                         <div class="flex items-center mb-3">
                             <i class="fas fa-robot text-2xl mr-3"></i>
                             <span class="text-sm font-medium opacity-90">AI</span>
@@ -52,7 +52,7 @@
                     </div>
 
                     <!-- eSignature Card -->
-                    <div class="bg-gray-800 text-white p-6 rounded-lg shadow-lg card-hover transition-all cursor-pointer">
+                    <div class="esignature-btn bg-gray-800 text-white p-6 rounded-lg shadow-lg card-hover transition-all cursor-pointer">
                         <div class="flex items-center mb-3">
                             <i class="fas fa-signature text-2xl mr-3"></i>
                             <span class="text-sm font-medium opacity-90">eSigning</span>

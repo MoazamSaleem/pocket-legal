@@ -12,11 +12,11 @@
                         <p class="text-gray-600">Manage team members and permissions</p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                        <button class="invite-user-btn px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                             <i class="fas fa-plus mr-2"></i>
                             Invite User
                         </button>
-                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        <button class="create-team-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                             <i class="fas fa-users mr-2"></i>
                             Create Team
                         </button>
@@ -94,9 +94,9 @@
                             <div class="flex items-center space-x-3">
                                 <div class="relative">
                                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                                    <input type="text" placeholder="Search users..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <input type="text" placeholder="Search users..." class="search-input pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 </div>
-                                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select class="role-filter px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option>All Roles</option>
                                     <option>Admin</option>
                                     <option>Editor</option>
@@ -106,98 +106,8 @@
                         </div>
                     </div>
 
-                    <div class="divide-y divide-gray-200">
-                        <!-- User Item -->
-                        <div class="user-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                        U
-                                    </div>
-                                    <div>
-                                        <h4 class="font-medium text-gray-800">Umar Khan</h4>
-                                        <p class="text-sm text-gray-500">umar@company.com</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Admin</span>
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                                    <div class="text-sm text-gray-500">Last seen: 2 hours ago</div>
-                                    <button class="text-gray-400 hover:text-gray-600">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Item -->
-                        <div class="user-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                        S
-                                    </div>
-                                    <div>
-                                        <h4 class="font-medium text-gray-800">Sarah Johnson</h4>
-                                        <p class="text-sm text-gray-500">sarah@company.com</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">Editor</span>
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                                    <div class="text-sm text-gray-500">Last seen: 1 day ago</div>
-                                    <button class="text-gray-400 hover:text-gray-600">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Item -->
-                        <div class="user-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                        M
-                                    </div>
-                                    <div>
-                                        <h4 class="font-medium text-gray-800">Michael Brown</h4>
-                                        <p class="text-sm text-gray-500">michael@company.com</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">Editor</span>
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
-                                    <div class="text-sm text-gray-500">Last seen: 3 hours ago</div>
-                                    <button class="text-gray-400 hover:text-gray-600">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Item -->
-                        <div class="user-item p-4 hover:bg-gray-50 cursor-pointer">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                        E
-                                    </div>
-                                    <div>
-                                        <h4 class="font-medium text-gray-800">Emily Davis</h4>
-                                        <p class="text-sm text-gray-500">emily@company.com</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">Viewer</span>
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Pending</span>
-                                    <div class="text-sm text-gray-500">Invited 2 days ago</div>
-                                    <button class="text-gray-400 hover:text-gray-600">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="users-container">
+                        <!-- Users will be loaded dynamically -->
                     </div>
 
                     <!-- Pagination -->
@@ -217,16 +127,6 @@
             </main>
         </div>
     </div>
-
-    <script>
-        function toggleSubmenu(id) {
-            const submenu = document.getElementById(id + '-submenu');
-            const arrow = document.getElementById(id + '-arrow');
-            
-            submenu.classList.toggle('hidden');
-            arrow.classList.toggle('rotate-180');
-        }
-    </script>
 <?php
     include 'footer.php';
 ?>
