@@ -78,7 +78,12 @@ switch ($method) {
             ]);
             
             if ($result) {
-                echo json_encode(['success' => true, 'message' => 'Task created successfully']);
+                $task_id = $conn->lastInsertId();
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Task created successfully',
+                    'task_id' => $task_id
+                ]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Failed to create task']);
             }

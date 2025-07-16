@@ -1,18 +1,28 @@
 <?php
 require_once 'includes/auth.php';
 
+// Redirect if already logged in
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
+}
+
 $auth = new Auth();
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email'] ?? '';
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     
-    if ($auth->login($email, $password)) {
-        header("Location: index.php");
-        exit();
+    if (empty($email) || empty($password)) {
+        $error = 'Please fill in all fields';
     } else {
-        $error = 'Invalid email or password';
+        if ($auth->login($email, $password)) {
+            header("Location: index.php");
+            exit();
+        } else {
+            $error = 'Invalid email or password';
+        }
     }
 }
 ?>

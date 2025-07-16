@@ -92,13 +92,20 @@ switch ($method) {
                     ]);
                     
                     if ($result) {
-                        echo json_encode(['success' => true, 'message' => 'Document uploaded successfully']);
+                        $document_id = $conn->lastInsertId();
+                        echo json_encode([
+                            'success' => true, 
+                            'message' => 'Document uploaded successfully',
+                            'document_id' => $document_id
+                        ]);
                     } else {
                         echo json_encode(['success' => false, 'message' => 'Failed to save document info']);
                     }
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to upload file']);
                 }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'No file uploaded']);
             }
         }
         break;

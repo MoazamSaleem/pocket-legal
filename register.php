@@ -1,25 +1,48 @@
 <?php
 require_once 'includes/auth.php';
 
+// Redirect if already logged in
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
+}
+
 $auth = new Auth();
 $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $data = [
-        'first_name' => $_POST['first_name'] ?? '',
-        'last_name' => $_POST['last_name'] ?? '',
-        'email' => $_POST['email'] ?? '',
-        'password' => $_POST['password'] ?? '',
-        'phone' => $_POST['phone'] ?? '',
-        'company' => $_POST['company'] ?? '',
-        'job_title' => $_POST['job_title'] ?? ''
-    ];
+    // Validate input
+    $first_name = trim($_POST['first_name'] ?? '');
+    $last_name = trim($_POST['last_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $phone = trim($_POST['phone'] ?? '');
+    $company = trim($_POST['company'] ?? '');
+    $job_title = trim($_POST['job_title'] ?? '');
     
-    if ($auth->register($data)) {
-        $success = 'Account created successfully! You can now login.';
+    if (empty($first_name) || empty($last_name) || empty($email) || empty($password)) {
+        $error = 'Please fill in all required fields';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Please enter a valid email address';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters long';
     } else {
-        $error = 'Registration failed. Email might already exist.';
+        $data = [
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'email' => $email,
+            'password' => $password,
+            'phone' => $phone,
+            'company' => $company,
+            'job_title' => $job_title
+        ];
+        
+        if ($auth->register($data)) {
+            $success = 'Account created successfully! You can now login.';
+        } else {
+            $error = 'Registration failed. Email might already exist.';
+        }
     }
 }
 ?>

@@ -1,36 +1,4 @@
 <?php
-// require_once 'includes/auth.php';
-// require_once 'config/database.php';
-
-// $auth = new Auth();
-// $auth->requireLogin();
-
-// $database = new Database();
-// $conn = $database->getConnection();
-
-// // Get dashboard stats
-// $stats = [];
-
-// // Total documents
-// $stmt = $conn->prepare("SELECT COUNT(*) as count FROM documents WHERE user_id = ?");
-// $stmt->execute([$_SESSION['user_id']]);
-// $stats['documents'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-
-// // Total tasks
-// $stmt = $conn->prepare("SELECT COUNT(*) as count FROM tasks WHERE assigned_to = ?");
-// $stmt->execute([$_SESSION['user_id']]);
-// $stats['tasks'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-
-// // Completed tasks
-// $stmt = $conn->prepare("SELECT COUNT(*) as count FROM tasks WHERE assigned_to = ? AND status = 'completed'");
-// $stmt->execute([$_SESSION['user_id']]);
-// $stats['completed_tasks'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-
-// // Recent documents
-// $stmt = $conn->prepare("SELECT * FROM documents WHERE user_id = ? ORDER BY created_at DESC LIMIT 5");
-// $stmt->execute([$_SESSION['user_id']]);
-// $recent_documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     include 'header.php';
 ?>
 
@@ -43,7 +11,7 @@
                         <h2 class="text-2xl font-bold text-gray-800">Welcome back <?php echo explode(' ', $_SESSION['user_name'])[0]; ?>,</h2>
                         <p class="text-gray-600">Here is what's happening in your account</p>
                     </div>
-                    <button onclick="openTaskModal()" class="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white hover:bg-gray-800 transition-colors">
+                    <button id="task-modal-btn" class="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white hover:bg-gray-800 transition-colors">
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
@@ -74,7 +42,7 @@
                     </div>
 
                     <!-- Upload Documents Card -->
-                    <div class="bg-gray-800 text-white p-6 rounded-lg shadow-lg card-hover transition-all cursor-pointer" onclick="openUploadModal()">
+                    <div id="upload-modal-btn" class="bg-gray-800 text-white p-6 rounded-lg shadow-lg card-hover transition-all cursor-pointer">
                         <div class="flex items-center mb-3">
                             <i class="fas fa-cloud-upload-alt text-2xl mr-3"></i>
                             <span class="text-sm font-medium opacity-90">Repository</span>
@@ -126,33 +94,12 @@
 
                             <!-- Documents List -->
                             <div id="documents-list">
-                                <?php if (empty($recent_documents)): ?>
                                 <div class="text-center py-12">
                                     <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
                                     <h4 class="text-lg font-medium text-gray-800 mb-2">No documents</h4>
                                     <p class="text-gray-500 mb-4">No documents with All status</p>
                                     <button onclick="window.location.href='documents.php'" class="text-blue-500 hover:text-blue-600 font-medium">View all</button>
                                 </div>
-                                <?php else: ?>
-                                <div class="space-y-3">
-                                    <?php foreach ($recent_documents as $doc): ?>
-                                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-file-alt text-blue-600"></i>
-                                            </div>
-                                            <div>
-                                                <h4 class="font-medium text-gray-800"><?php echo htmlspecialchars($doc['title']); ?></h4>
-                                                <p class="text-sm text-gray-500">Modified <?php echo date('M j, Y', strtotime($doc['updated_at'])); ?></p>
-                                            </div>
-                                        </div>
-                                        <span class="px-2 py-1 bg-<?php echo $doc['status'] === 'signed' ? 'green' : ($doc['status'] === 'draft' ? 'gray' : 'yellow'); ?>-100 text-<?php echo $doc['status'] === 'signed' ? 'green' : ($doc['status'] === 'draft' ? 'gray' : 'yellow'); ?>-800 text-xs font-medium rounded-full">
-                                            <?php echo ucfirst(str_replace('_', ' ', $doc['status'])); ?>
-                                        </span>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -173,20 +120,12 @@
 
                             <!-- Tasks List -->
                             <div id="tasks-list">
-                                <?php if ($stats['completed_tasks'] == $stats['tasks'] && $stats['tasks'] > 0): ?>
-                                <div class="text-center py-8">
-                                    <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
-                                    <h4 class="text-lg font-medium text-gray-800 mb-2">Well done!</h4>
-                                    <p class="text-gray-500">You have completed all your tasks</p>
-                                </div>
-                                <?php else: ?>
                                 <div class="text-center py-8">
                                     <i class="fas fa-tasks text-4xl text-gray-400 mb-4"></i>
                                     <h4 class="text-lg font-medium text-gray-800 mb-2">No tasks</h4>
                                     <p class="text-gray-500 mb-4">Create your first task to get started</p>
-                                    <button onclick="openTaskModal()" class="text-blue-500 hover:text-blue-600 font-medium">Add Task</button>
+                                    <button onclick="pocketLegal.openTaskModal()" class="text-blue-500 hover:text-blue-600 font-medium">Add Task</button>
                                 </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -201,7 +140,7 @@
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-semibold text-gray-800">Add task</h3>
-                    <button onclick="closeTaskModal()" class="text-gray-400 hover:text-gray-600">
+                    <button data-close-modal="taskModal" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -230,7 +169,7 @@
                         </div>
                         
                         <div class="space-y-3">
-                            <button type="button" onclick="toggleDueDateInput()" class="flex items-center space-x-3 text-blue-500 hover:text-blue-600">
+                            <button type="button" data-toggle="dueDateInput" class="flex items-center space-x-3 text-blue-500 hover:text-blue-600">
                                 <i class="fas fa-calendar"></i>
                                 <span>Add due date</span>
                             </button>
@@ -239,7 +178,7 @@
                                 <input type="datetime-local" id="taskDueDate" name="due_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             
-                            <button type="button" onclick="toggleReminderInput()" class="flex items-center space-x-3 text-blue-500 hover:text-blue-600">
+                            <button type="button" data-toggle="reminderInput" class="flex items-center space-x-3 text-blue-500 hover:text-blue-600">
                                 <i class="fas fa-bell"></i>
                                 <span>Add reminder</span>
                             </button>
@@ -248,7 +187,7 @@
                                 <input type="datetime-local" id="taskReminder" name="reminder_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             
-                            <button type="button" onclick="toggleAssignInput()" class="flex items-center space-x-3 text-blue-500 hover:text-blue-600">
+                            <button type="button" data-toggle="assignInput" class="flex items-center space-x-3 text-blue-500 hover:text-blue-600">
                                 <i class="fas fa-user"></i>
                                 <span>Assign users</span>
                             </button>
@@ -272,7 +211,7 @@
                             <button type="submit" class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
                                 Add
                             </button>
-                            <button type="button" onclick="closeTaskModal()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button type="button" data-close-modal="taskModal" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                                 Cancel
                             </button>
                         </div>
@@ -288,7 +227,7 @@
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-semibold text-gray-800">Upload Document</h3>
-                    <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600">
+                    <button data-close-modal="uploadModal" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -330,7 +269,7 @@
                             <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                                 Upload
                             </button>
-                            <button type="button" onclick="closeUploadModal()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button type="button" data-close-modal="uploadModal" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                                 Cancel
                             </button>
                         </div>

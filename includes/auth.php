@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 class Auth {
     private $conn;
@@ -31,6 +31,15 @@ class Auth {
     }
     
     public function register($data) {
+        // Check if email already exists
+        $query = "SELECT id FROM users WHERE email = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$data['email']]);
+        
+        if ($stmt->rowCount() > 0) {
+            return false; // Email already exists
+        }
+        
         $query = "INSERT INTO users (first_name, last_name, email, password, phone, company, job_title) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($query);
         $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -63,7 +72,13 @@ class Auth {
     
     public function requireLogin() {
         if (!$this->isLoggedIn()) {
-            header("Location: login.php");
+            // Check if we're in an API call
+            if (strpos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            } else {
+                header("Location: login.php");
+            }
             exit();
         }
     }
