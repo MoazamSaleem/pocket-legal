@@ -198,27 +198,53 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
 <!-- AI Chat Modal -->
 <div id="aiChatModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div class="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] flex">
+            <!-- Conversations Sidebar -->
+            <div class="w-80 border-r bg-gray-50 flex flex-col">
+                <div class="p-4 border-b bg-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-gray-800">Conversations</h3>
+                        <button onclick="startNewConversation()" class="text-blue-600 hover:text-blue-700">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="conversationSearch" placeholder="Search conversations..." class="w-full pl-8 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-search absolute left-2 top-3 text-gray-400 text-xs"></i>
+                    </div>
+                </div>
+                <div id="conversationsList" class="flex-1 overflow-y-auto p-2">
+                    <!-- Conversations will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col">
             <div class="p-6 border-b">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold flex items-center">
                         <i class="fas fa-robot text-blue-600 mr-2"></i>
                         AI Contract Assistant
                     </h2>
-                    <button onclick="closeAIChat()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+                        <div class="flex items-center space-x-2">
+                            <button id="deleteConversationBtn" onclick="deleteCurrentConversation()" class="text-red-500 hover:text-red-700 hidden">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button onclick="closeAIChat()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
                 </div>
             </div>
             
             <!-- Chat Messages Area -->
-            <div id="chatMessages" class="flex-1 p-6 overflow-y-auto bg-gray-50 max-h-96">
+                <div id="chatMessages" class="flex-1 p-6 overflow-y-auto bg-gray-50">
                 <div class="space-y-4">
                     <div class="flex items-start space-x-3">
                         <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
                             <i class="fas fa-robot"></i>
                         </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm max-w-md">
+                            <div class="bg-white p-4 rounded-lg shadow-sm max-w-2xl">
                             <p class="text-gray-800">Hello! I'm your AI contract assistant. Upload a contract and ask me anything about it - I can help with analysis, risk assessment, clause explanations, and more.</p>
                         </div>
                     </div>
@@ -257,6 +283,8 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
                         <span id="charCount">0</span>/2000 characters
                     </div>
                 </div>
+            </div>
+        </div>
             </div>
         </div>
     </div>
@@ -298,7 +326,8 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
 <script>
     let selectedFiles = [];
     let chatFile = null;
-    let messageCount = 1;
+    let currentConversationId = null;
+    let conversations = [];
 
     function toggleSubmenu(id) {
         const submenu = document.getElementById(id + '-submenu');
@@ -307,24 +336,184 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
 
     function openAIChat() {
         document.getElementById('aiChatModal').classList.remove('hidden');
+        loadConversations();
+        startNewConversation();
     }
 
     function closeAIChat() {
         document.getElementById('aiChatModal').classList.add('hidden');
-        document.getElementById('chatInput').value = '';
+        resetChatState();
+    }
+    
+    function resetChatState() {
+        currentConversationId = null;
         chatFile = null;
+        document.getElementById('chatInput').value = '';
         document.getElementById('chatFilePreview').innerHTML = '';
+        document.getElementById('deleteConversationBtn').classList.add('hidden');
+        updateCharCount();
     }
-
-    function openUploadModal() {
-        document.getElementById('uploadModal').classList.remove('hidden');
+    
+    function startNewConversation() {
+        resetChatState();
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = `
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm max-w-2xl">
+                        <p class="text-gray-800">Hello! I'm your AI contract assistant. Upload a contract and ask me anything about it - I can help with analysis, risk assessment, clause explanations, and more.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove active state from all conversations
+        document.querySelectorAll('.conversation-item').forEach(item => {
+            item.classList.remove('bg-blue-50', 'border-blue-200');
+        });
     }
-
-    function closeUploadModal() {
-        document.getElementById('uploadModal').classList.add('hidden');
-        selectedFiles = [];
-        document.getElementById('fileList').innerHTML = '';
-        document.getElementById('uploadBtn').disabled = true;
+    
+    function loadConversations() {
+        $.ajax({
+            url: 'api/get_conversations.php',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    conversations = response.conversations;
+                    displayConversations();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading conversations:', error);
+            }
+        });
+    }
+    
+    function displayConversations() {
+        const conversationsList = document.getElementById('conversationsList');
+        
+        if (conversations.length === 0) {
+            conversationsList.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-comments text-2xl mb-2"></i>
+                    <p class="text-sm">No conversations yet</p>
+                    <p class="text-xs">Start chatting to create your first conversation</p>
+                </div>
+            `;
+            return;
+        }
+        
+        conversationsList.innerHTML = conversations.map(conv => `
+            <div class="conversation-item p-3 rounded-lg cursor-pointer hover:bg-gray-100 mb-2 border border-transparent" 
+                 onclick="loadConversation(${conv.id})" data-conversation-id="${conv.id}">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-gray-900 text-sm truncate">${conv.title}</h4>
+                        <p class="text-xs text-gray-500 truncate mt-1">${conv.last_message || 'No messages'}</p>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs text-gray-400">${conv.message_count} messages</span>
+                            <span class="text-xs text-gray-400">${formatDate(conv.updated_at)}</span>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteConversation(${conv.id})" 
+                            class="text-gray-400 hover:text-red-500 ml-2">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function loadConversation(conversationId) {
+        currentConversationId = conversationId;
+        
+        // Update UI to show active conversation
+        document.querySelectorAll('.conversation-item').forEach(item => {
+            item.classList.remove('bg-blue-50', 'border-blue-200');
+        });
+        
+        const activeItem = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+        if (activeItem) {
+            activeItem.classList.add('bg-blue-50', 'border-blue-200');
+        }
+        
+        document.getElementById('deleteConversationBtn').classList.remove('hidden');
+        
+        // Load conversation messages
+        $.ajax({
+            url: `api/get_conversations.php?conversation_id=${conversationId}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    displayConversationMessages(response.messages);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading conversation:', error);
+            }
+        });
+    }
+    
+    function displayConversationMessages(messages) {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '<div class="space-y-4"></div>';
+        const container = chatMessages.querySelector('.space-y-4');
+        
+        messages.forEach(message => {
+            addMessageToChat(message.message_type, message.content, message.document_name, false);
+        });
+    }
+    
+    function deleteConversation(conversationId) {
+        if (!confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+            return;
+        }
+        
+        $.ajax({
+            url: 'api/delete_conversation.php',
+            method: 'POST',
+            data: JSON.stringify({ conversation_id: conversationId }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    loadConversations();
+                    if (currentConversationId === conversationId) {
+                        startNewConversation();
+                    }
+                } else {
+                    alert('Error deleting conversation: ' + response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error deleting conversation: ' + error);
+            }
+        });
+    }
+    
+    function deleteCurrentConversation() {
+        if (currentConversationId) {
+            deleteConversation(currentConversationId);
+        }
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+            return 'Today';
+        } else if (diffDays === 2) {
+            return 'Yesterday';
+        } else if (diffDays <= 7) {
+            return `${diffDays - 1} days ago`;
+        } else {
+            return date.toLocaleDateString();
+        }
     }
 
     function showComingSoon(feature) {
@@ -364,7 +553,7 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
         }
 
         // Add user message to chat
-        addMessageToChat('user', query);
+        addMessageToChat('user', query, chatFile ? chatFile.name : null);
         
         // Clear input
         input.value = '';
@@ -376,6 +565,10 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
         // Prepare form data for AI contract review
         const formData = new FormData();
         formData.append('query', query);
+        
+        if (currentConversationId) {
+            formData.append('conversation_id', currentConversationId);
+        }
         
         // Add document if attached
         if (chatFile) {
@@ -391,58 +584,68 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
             success: function(response) {
                 removeTypingIndicator();
                 if (response.success) {
-                    let aiMessage = response.response;
-                    if (response.document_processed) {
-                        aiMessage = `📄 Document "${response.document_name}" processed successfully.\n\n${aiMessage}`;
+                    // Update conversation ID if this is a new conversation
+                    if (!currentConversationId && response.conversation_id) {
+                        currentConversationId = response.conversation_id;
+                        document.getElementById('deleteConversationBtn').classList.remove('hidden');
+                        loadConversations(); // Refresh conversations list
                     }
-                    addMessageToChat('ai', aiMessage);
-                    if (response.note) {
-                        console.log('Note:', response.note);
+                    
+                    addMessageToChat('assistant', response.response);
+                    
+                    // Show webhook status
+                    if (response.webhook_success) {
+                        console.log('✅ Webhook response received successfully');
+                    } else {
+                        console.log('⚠️ Using fallback response - webhook unavailable');
                     }
                 } else {
-                    addMessageToChat('ai', 'I apologize, but I encountered an error processing your request. Please try again.');
+                    addMessageToChat('assistant', 'I apologize, but I encountered an error processing your request. Please try again.');
                 }
                 removeChatFile();
             },
             error: function(xhr, status, error) {
                 removeTypingIndicator();
-                addMessageToChat('ai', 'I apologize, but I encountered an error processing your request. Please try again.');
+                addMessageToChat('assistant', 'I apologize, but I encountered an error processing your request. Please try again.');
                 console.error('AI Query Error:', error);
             }
         });
     }
 
-    function addMessageToChat(sender, message) {
+    function addMessageToChat(sender, message, documentName = null, animate = true) {
         const chatMessages = document.getElementById('chatMessages');
+        const container = chatMessages.querySelector('.space-y-4') || chatMessages;
         const messageDiv = document.createElement('div');
-        messageDiv.className = 'flex items-start space-x-3 animate-fade-in';
+        messageDiv.className = `flex items-start space-x-3 ${animate ? 'animate-fade-in' : ''}`;
         
         if (sender === 'user') {
             messageDiv.innerHTML = `
                 <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white text-sm">
                     <?php echo strtoupper(substr($user_name, 0, 1)); ?>
                 </div>
-                <div class="bg-blue-600 text-white p-4 rounded-lg shadow-sm max-w-md ml-auto">
-                    <p>${message}</p>
+                <div class="bg-blue-600 text-white p-4 rounded-lg shadow-sm max-w-2xl">
+                    ${documentName ? `<div class="mb-2 text-blue-100 text-sm"><i class="fas fa-paperclip mr-1"></i>${documentName}</div>` : ''}
+                    <p class="whitespace-pre-wrap">${message}</p>
                 </div>
             `;
-        } else {
+        } else if (sender === 'assistant') {
             messageDiv.innerHTML = `
                 <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
                     <i class="fas fa-robot"></i>
                 </div>
-                <div class="bg-white p-4 rounded-lg shadow-sm max-w-md">
-                    <p class="text-gray-800">${message}</p>
+                <div class="bg-white p-4 rounded-lg shadow-sm max-w-2xl">
+                    <p class="text-gray-800 whitespace-pre-wrap">${message}</p>
                 </div>
             `;
         }
         
-        chatMessages.appendChild(messageDiv);
+        container.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function addTypingIndicator() {
         const chatMessages = document.getElementById('chatMessages');
+        const container = chatMessages.querySelector('.space-y-4') || chatMessages;
         const typingDiv = document.createElement('div');
         typingDiv.id = 'typingIndicator';
         typingDiv.className = 'flex items-start space-x-3';
@@ -458,7 +661,7 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
                 </div>
             </div>
         `;
-        chatMessages.appendChild(typingDiv);
+        container.appendChild(typingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
@@ -630,6 +833,13 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
         }
         .animate-fade-in {
             animation: fade-in 0.3s ease-out;
+        }
+        .conversation-item:hover {
+            background-color: #f9fafb;
+        }
+        .conversation-item.active {
+            background-color: #eff6ff;
+            border-color: #dbeafe;
         }
     `;
     document.head.appendChild(style);
