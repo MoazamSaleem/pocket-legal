@@ -286,10 +286,19 @@ $user_name = $_SESSION['user_name'] ?? 'User';
             success: function(response) {
                 alert('Documents uploaded successfully!');
                 closeUploadModal();
-                location.reload();
+                // Refresh page to show new documents
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
             },
             error: function(xhr, status, error) {
-                alert('Error uploading documents: ' + error);
+                console.error('Upload error:', xhr.responseText);
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    alert('Error uploading documents: ' + (response.error || error));
+                } catch (e) {
+                    alert('Error uploading documents: ' + error);
+                }
             },
             complete: function() {
                 uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Upload';

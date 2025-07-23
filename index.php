@@ -373,18 +373,29 @@ $recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
         // Show typing indicator
         addTypingIndicator();
         
-        // Send query to our API
+        // Prepare form data for AI contract review
+        const formData = new FormData();
+        formData.append('query', query);
+        
+        // Add document if attached
+        if (chatFile) {
+            formData.append('document', chatFile);
+        }
+        
         $.ajax({
-            url: 'api/ai_query.php',
+            url: 'api/ai_contract_review.php',
             method: 'POST',
-            data: JSON.stringify({
-                query: query
-            }),
-            contentType: 'application/json',
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function(response) {
                 removeTypingIndicator();
                 if (response.success) {
-                    addMessageToChat('ai', response.response);
+                    let aiMessage = response.response;
+                    if (response.document_processed) {
+                        aiMessage = `📄 Document "${response.document_name}" processed successfully.\n\n${aiMessage}`;
+                    }
+                    addMessageToChat('ai', aiMessage);
                     if (response.note) {
                         console.log('Note:', response.note);
                     }

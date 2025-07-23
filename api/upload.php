@@ -44,130 +44,52 @@ try {
             
             for ($i = 0; $i < $file_count; $i++) {
                 if ($files['error'][$i] === UPLOAD_ERR_OK) {
-                    $original_name = $files['name'][$i];
-                    $tmp_name = $files['tmp_name'][$i];
-                    $file_size = $files['size'][$i];
-                    $mime_type = $files['type'][$i];
+                    $result = processFile(
+                        $files['name'][$i],
+                        $files['tmp_name'][$i],
+                        $files['size'][$i],
+                        $files['type'][$i],
+                        $upload_dir,
+                        $document,
+                        $_SESSION['user_id']
+                    );
                     
-                    // Validate file type
-                    $allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-                    if (!in_array($mime_type, $allowed_types)) {
-                        $errors[] = "File type not allowed for {$original_name}";
-                        continue;
-                    }
-                    
-                    // Validate file size (max 10MB)
-                    if ($file_size > 10 * 1024 * 1024) {
-                        $errors[] = "File too large: {$original_name}";
-                        continue;
-                    }
-                    
-                    // Generate unique filename
-                    $file_extension = pathinfo($original_name, PATHINFO_EXTENSION);
-                    $filename = uniqid() . '_' . time() . '.' . $file_extension;
-                    $file_path = $upload_dir . $filename;
-                    
-                    if (move_uploaded_file($tmp_name, $file_path)) {
-                        // Save to database
-                        $document->user_id = $_SESSION['user_id'];
-                        $document->filename = $filename;
-                        $document->original_name = $original_name;
-                        $document->file_path = $file_path;
-                        $document->file_size = $file_size;
-                        $document->mime_type = $mime_type;
-                        $document->status = 'uploaded';
-                        
-                        if ($document->create()) {
-                            $uploaded_files[] = [
-                                'id' => $document->id,
-                                'filename' => $filename,
-                                'original_name' => $original_name,
-                                'size' => $file_size
-                            ];
-                            
-                            // Send to webhook for processing (optional)
-                            try {
-                                $webhook_data = [
-                                    'document_id' => $document->id,
-                                    'filename' => $original_name,
-                                    'user_id' => $_SESSION['user_id'],
-                                    'timestamp' => date('c')
-                                ];
-                                
-                                $webhook_url = 'https://n8n.srv909751.hstgr.cloud/webhook/doc_upload';
-                                
-                                $ch = curl_init();
-                                curl_setopt($ch, CURLOPT_URL, $webhook_url);
-                                curl_setopt($ch, CURLOPT_POST, 1);
-                                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($webhook_data));
-                                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-                                
-                                curl_exec($ch);
-                                curl_close($ch);
-                            } catch (Exception $e) {
-                                // Webhook failed, but file upload succeeded
-                                error_log("Webhook failed: " . $e->getMessage());
-                            }
-                        } else {
-                            $errors[] = "Failed to save {$original_name} to database";
-                        }
+                    if ($result['success']) {
+                        $uploaded_files[] = $result['data'];
                     } else {
-                        $errors[] = "Failed to upload {$original_name}";
+                        $errors[] = $result['error'];
                     }
                 } else {
-                    $errors[] = "Upload error for {$files['name'][$i]}";
+                    $errors[] = "Upload error for {$files['name'][$i]}: " . getUploadErrorMessage($files['error'][$i]);
                 }
             }
         } else {
             // Single file
             if ($files['error'] === UPLOAD_ERR_OK) {
-                $original_name = $files['name'];
-                $tmp_name = $files['tmp_name'];
-                $file_size = $files['size'];
-                $mime_type = $files['type'];
+                $result = processFile(
+                    $files['name'],
+                    $files['tmp_name'],
+                    $files['size'],
+                    $files['type'],
+                    $upload_dir,
+                    $document,
+                    $_SESSION['user_id']
+                );
                 
-                // Validate file type
-                $allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-                if (!in_array($mime_type, $allowed_types)) {
-                    $errors[] = "File type not allowed for {$original_name}";
-                } else if ($file_size > 10 * 1024 * 1024) {
-                    $errors[] = "File too large: {$original_name}";
+                if ($result['success']) {
+                    $uploaded_files[] = $result['data'];
                 } else {
-                $file_extension = pathinfo($original_name, PATHINFO_EXTENSION);
-                $filename = uniqid() . '_' . time() . '.' . $file_extension;
-                $file_path = $upload_dir . $filename;
-                
-                if (move_uploaded_file($tmp_name, $file_path)) {
-                    $document->user_id = $_SESSION['user_id'];
-                    $document->filename = $filename;
-                    $document->original_name = $original_name;
-                    $document->file_path = $file_path;
-                    $document->file_size = $file_size;
-                    $document->mime_type = $mime_type;
-                    $document->status = 'uploaded';
-                    
-                    if ($document->create()) {
-                        $uploaded_files[] = [
-                            'id' => $document->id,
-                            'filename' => $filename,
-                            'original_name' => $original_name,
-                            'size' => $file_size
-                        ];
-                    } else {
-                        $errors[] = "Failed to save {$original_name} to database";
-                    }
+                    $errors[] = $result['error'];
                 }
-                } else {
-                    $errors[] = "Failed to upload {$original_name}";
-                }
+            } else {
+                $errors[] = "Upload error: " . getUploadErrorMessage($files['error']);
             }
         }
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'No files uploaded']);
+        exit();
     }
-
 
     echo json_encode([
         'success' => true,
@@ -179,5 +101,98 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+}
+
+function processFile($original_name, $tmp_name, $file_size, $mime_type, $upload_dir, $document, $user_id) {
+    // Validate file type
+    $allowed_types = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'image/jpeg',
+        'image/png',
+        'image/gif'
+    ];
+    
+    if (!in_array($mime_type, $allowed_types)) {
+        return [
+            'success' => false,
+            'error' => "File type not allowed for {$original_name}. Allowed types: PDF, DOC, DOCX, TXT, JPG, PNG, GIF"
+        ];
+    }
+    
+    // Validate file size (max 10MB)
+    if ($file_size > 10 * 1024 * 1024) {
+        return [
+            'success' => false,
+            'error' => "File too large: {$original_name}. Maximum size is 10MB."
+        ];
+    }
+    
+    // Generate unique filename
+    $file_extension = pathinfo($original_name, PATHINFO_EXTENSION);
+    $filename = uniqid() . '_' . time() . '.' . $file_extension;
+    $file_path = $upload_dir . $filename;
+    
+    if (move_uploaded_file($tmp_name, $file_path)) {
+        // Save to database
+        $document->user_id = $user_id;
+        $document->filename = $filename;
+        $document->original_name = $original_name;
+        $document->file_path = $file_path;
+        $document->file_size = $file_size;
+        $document->mime_type = $mime_type;
+        $document->status = 'uploaded';
+        $document->ai_processed = false;
+        
+        if ($document->create()) {
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $document->id,
+                    'filename' => $filename,
+                    'original_name' => $original_name,
+                    'size' => $file_size,
+                    'mime_type' => $mime_type,
+                    'status' => 'uploaded'
+                ]
+            ];
+        } else {
+            // Clean up file if database save failed
+            if (file_exists($file_path)) {
+                unlink($file_path);
+            }
+            return [
+                'success' => false,
+                'error' => "Failed to save {$original_name} to database"
+            ];
+        }
+    } else {
+        return [
+            'success' => false,
+            'error' => "Failed to upload {$original_name}"
+        ];
+    }
+}
+
+function getUploadErrorMessage($error_code) {
+    switch ($error_code) {
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            return 'File too large';
+        case UPLOAD_ERR_PARTIAL:
+            return 'File partially uploaded';
+        case UPLOAD_ERR_NO_FILE:
+            return 'No file uploaded';
+        case UPLOAD_ERR_NO_TMP_DIR:
+            return 'No temporary directory';
+        case UPLOAD_ERR_CANT_WRITE:
+            return 'Cannot write to disk';
+        case UPLOAD_ERR_EXTENSION:
+            return 'Upload stopped by extension';
+        default:
+            return 'Unknown upload error';
+    }
 }
 ?>

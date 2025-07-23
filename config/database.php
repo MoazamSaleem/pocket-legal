@@ -19,11 +19,23 @@ class Database {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, 
                                 $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            $this->conn->exec("set names utf8");
         } catch(PDOException $exception) {
-            echo "Connection error: " . $exception->getMessage();
+            error_log("Connection error: " . $exception->getMessage());
+            throw new Exception("Database connection failed");
         }
         
         return $this->conn;
+    }
+    
+    public function testConnection() {
+        try {
+            $conn = $this->getConnection();
+            return $conn !== null;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 }
 ?>
