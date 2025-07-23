@@ -81,7 +81,7 @@ if ($_POST) {
         <div class="text-center">
             <p class="text-sm text-gray-600">
                 Demo credentials: <br>
-                <strong>Email:</strong> umar@example.com <br>
+                <strong>Email:</strong> user@pocketlegal.com <br>
                 <strong>Password:</strong> password123
             </p>
         </div>

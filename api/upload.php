@@ -49,6 +49,19 @@ try {
                     $file_size = $files['size'][$i];
                     $mime_type = $files['type'][$i];
                     
+                    // Validate file type
+                    $allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+                    if (!in_array($mime_type, $allowed_types)) {
+                        $errors[] = "File type not allowed for {$original_name}";
+                        continue;
+                    }
+                    
+                    // Validate file size (max 10MB)
+                    if ($file_size > 10 * 1024 * 1024) {
+                        $errors[] = "File too large: {$original_name}";
+                        continue;
+                    }
+                    
                     // Generate unique filename
                     $file_extension = pathinfo($original_name, PATHINFO_EXTENSION);
                     $filename = uniqid() . '_' . time() . '.' . $file_extension;
@@ -71,6 +84,34 @@ try {
                                 'original_name' => $original_name,
                                 'size' => $file_size
                             ];
+                            
+                            // Send to webhook for processing (optional)
+                            try {
+                                $webhook_data = [
+                                    'document_id' => $document->id,
+                                    'filename' => $original_name,
+                                    'user_id' => $_SESSION['user_id'],
+                                    'timestamp' => date('c')
+                                ];
+                                
+                                $webhook_url = 'https://n8n.srv909751.hstgr.cloud/webhook/doc_upload';
+                                
+                                $ch = curl_init();
+                                curl_setopt($ch, CURLOPT_URL, $webhook_url);
+                                curl_setopt($ch, CURLOPT_POST, 1);
+                                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($webhook_data));
+                                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                                
+                                curl_exec($ch);
+                                curl_close($ch);
+                            } catch (Exception $e) {
+                                // Webhook failed, but file upload succeeded
+                                error_log("Webhook failed: " . $e->getMessage());
+                            }
                         } else {
                             $errors[] = "Failed to save {$original_name} to database";
                         }
@@ -89,6 +130,13 @@ try {
                 $file_size = $files['size'];
                 $mime_type = $files['type'];
                 
+                // Validate file type
+                $allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+                if (!in_array($mime_type, $allowed_types)) {
+                    $errors[] = "File type not allowed for {$original_name}";
+                } else if ($file_size > 10 * 1024 * 1024) {
+                    $errors[] = "File too large: {$original_name}";
+                } else {
                 $file_extension = pathinfo($original_name, PATHINFO_EXTENSION);
                 $filename = uniqid() . '_' . time() . '.' . $file_extension;
                 $file_path = $upload_dir . $filename;
@@ -112,6 +160,7 @@ try {
                     } else {
                         $errors[] = "Failed to save {$original_name} to database";
                     }
+                }
                 } else {
                     $errors[] = "Failed to upload {$original_name}";
                 }

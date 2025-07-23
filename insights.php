@@ -253,6 +253,16 @@ include_once 'header.php';
 
         // Initialize Charts
         document.addEventListener('DOMContentLoaded', function() {
+            // Load Chart.js
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = function() {
+                initializeCharts();
+            };
+            document.head.appendChild(script);
+        });
+        
+        function initializeCharts() {
             // Contract Status Pie Chart
             const statusCtx = document.getElementById('statusChart').getContext('2d');
             new Chart(statusCtx, {
@@ -342,5 +352,5 @@ include_once 'header.php';
                     }
                 }
             });
-        });
+        }
     </script>

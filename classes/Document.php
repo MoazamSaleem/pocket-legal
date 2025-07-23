@@ -1,5 +1,4 @@
 <?php
-require_once 'config/database.php';
 
 class Document {
     private $conn;
@@ -61,6 +60,32 @@ class Document {
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Get document by ID
+    public function getById($id, $user_id) {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE id = :id AND user_id = :user_id 
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // Delete document
+    public function delete($id, $user_id) {
+        $query = "DELETE FROM " . $this->table_name . " 
+                  WHERE id = :id AND user_id = :user_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(":user_id", $user_id);
+
+        return $stmt->execute();
     }
 
     // Update AI processing status

@@ -1,5 +1,14 @@
 <?php
 include_once 'header.php';
+require_once 'config/database.php';
+require_once 'classes/Document.php';
+
+$database = new Database();
+$db = $database->getConnection();
+$document = new Document($db);
+
+$user_documents = $document->getUserDocuments($_SESSION['user_id']);
+$recent_documents = array_slice($user_documents, 0, 5); // Get 5 most recent
 ?>
 
     <!-- Main Content -->
@@ -121,13 +130,44 @@ include_once 'header.php';
                         <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">Unknown</button>
                     </div>
 
-                    <!-- No Documents State -->
-                    <div class="text-center py-12">
-                        <i class="fas fa-file-alt text-4xl text-gray-300 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No documents</h3>
-                        <p class="text-gray-500 mb-4">No documents with AI status.</p>
-                        <button class="text-blue-600 hover:text-blue-700 font-medium">View all</button>
-                    </div>
+                    <!-- Recent Documents -->
+                    <?php if (empty($recent_documents)): ?>
+                        <div class="text-center py-12">
+                            <i class="fas fa-file-alt text-4xl text-gray-300 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No documents</h3>
+                            <p class="text-gray-500 mb-4">Upload your first document to get started.</p>
+                            <button onclick="openUploadModal()" class="text-blue-600 hover:text-blue-700 font-medium">Upload Document</button>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3">
+                            <?php foreach ($recent_documents as $doc): ?>
+                                <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                            <i class="fas fa-file-alt text-blue-600 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($doc['original_name']); ?></div>
+                                            <div class="text-xs text-gray-500"><?php echo date('M j, Y', strtotime($doc['created_at'])); ?></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                            <?php echo $doc['status'] === 'uploaded' ? 'bg-green-100 text-green-800' : 
+                                                        ($doc['status'] === 'processing' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'); ?>">
+                                            <?php echo ucfirst($doc['status']); ?>
+                                        </span>
+                                        <?php if ($doc['ai_processed']): ?>
+                                            <i class="fas fa-check-circle text-green-500 text-sm"></i>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            <div class="text-center pt-4">
+                                <a href="documents.php" class="text-blue-600 hover:text-blue-700 font-medium text-sm">View all documents</a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Tasks -->
@@ -333,80 +373,32 @@ include_once 'header.php';
         // Show typing indicator
         addTypingIndicator();
         
-        // Prepare data for webhook
-        const formData = new FormData();
-        formData.append('query', query);
-        formData.append('user_id', <?php echo json_encode($_SESSION['user_id']); ?>);
-        formData.append('timestamp', new Date().toISOString());
-        
-        if (chatFile) {
-            formData.append('contract', chatFile);
-        }
-
-        // Send to webhooks
-        // First upload document if present, then send query
-        if (chatFile) {
-            // Upload document first
-            $.ajax({
-                url: 'https://n8n.srv909751.hstgr.cloud/webhook/doc_upload',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(uploadResponse) {
-                    // Now send the query with document context
-                    const queryData = {
-                        query: query,
-                        user_id: <?php echo json_encode($_SESSION['user_id']); ?>,
-                        document_uploaded: true,
-                        document_info: uploadResponse,
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    $.ajax({
-                        url: 'https://n8n.srv909751.hstgr.cloud/webhook/query',
-                        method: 'POST',
-                        data: JSON.stringify(queryData),
-                        contentType: 'application/json',
-                        success: function(queryResponse) {
-                            removeTypingIndicator();
-                            const aiResponse = queryResponse.response || generateDemoResponse(query);
-                            addMessageToChat('ai', aiResponse);
-                            removeChatFile();
-                        },
-                        error: function() {
-                            removeTypingIndicator();
-                            addMessageToChat('ai', 'I apologize, but I encountered an error processing your request. Please try again.');
-                        }
-                    });
-                },
-                error: function() {
-                    removeTypingIndicator();
-                    addMessageToChat('ai', 'Error uploading document. Please try again.');
-                }
-            });
-        } else {
-            // Just send query without document
-            $.ajax({
-                url: 'https://n8n.srv909751.hstgr.cloud/webhook/query',
-                method: 'POST',
-                data: JSON.stringify({
-                    query: query,
-                    user_id: <?php echo json_encode($_SESSION['user_id']); ?>,
-                    timestamp: new Date().toISOString()
-                }),
-                contentType: 'application/json',
-                success: function(response) {
-                    removeTypingIndicator();
-                    const aiResponse = response.response || generateDemoResponse(query);
-                    addMessageToChat('ai', aiResponse);
-                },
-                error: function() {
-                    removeTypingIndicator();
+        // Send query to our API
+        $.ajax({
+            url: 'api/ai_query.php',
+            method: 'POST',
+            data: JSON.stringify({
+                query: query
+            }),
+            contentType: 'application/json',
+            success: function(response) {
+                removeTypingIndicator();
+                if (response.success) {
+                    addMessageToChat('ai', response.response);
+                    if (response.note) {
+                        console.log('Note:', response.note);
+                    }
+                } else {
                     addMessageToChat('ai', 'I apologize, but I encountered an error processing your request. Please try again.');
                 }
-            });
-        }
+                removeChatFile();
+            },
+            error: function(xhr, status, error) {
+                removeTypingIndicator();
+                addMessageToChat('ai', 'I apologize, but I encountered an error processing your request. Please try again.');
+                console.error('AI Query Error:', error);
+            }
+        });
     }
 
     function addMessageToChat(sender, message) {

@@ -104,7 +104,7 @@ $user_name = $_SESSION['user_name'] ?? 'User';
                         <i class="fas fa-chevron-down text-gray-400"></i>
                     </div>
                     <div id="settings-submenu" class="ml-6 mt-2 space-y-1 hidden">
-                        <a href="#" class="block py-1 text-sm text-gray-600 hover:text-blue-600">Users & teams</a>
+                        <a href="users-teams.php" class="block py-1 text-sm text-gray-600 hover:text-blue-600">Users & teams</a>
                         <a href="settings.php" class="block py-1 text-sm text-gray-600 hover:text-blue-600">Account</a>
                     </div>
                 </div>

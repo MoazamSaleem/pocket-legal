@@ -1,5 +1,4 @@
 <?php
-require_once 'config/database.php';
 
 class User {
     private $conn;
@@ -78,6 +77,16 @@ class User {
             return true;
         }
         return false;
+    }
+    
+    // Get all users
+    public function getAllUsers() {
+        $query = "SELECT id, name, email, created_at FROM " . $this->table_name . " 
+                  ORDER BY created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>
